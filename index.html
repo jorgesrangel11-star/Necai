@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Necai - Control Operativo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; padding: 12px; color: #334155; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .form-container { width: 100%; max-width: 480px; background: #ffffff; padding: 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .logo-container { text-align: center; margin-bottom: 15px; }
+        .logo-container img { max-width: 180px; height: auto; object-fit: contain; }
+        h2 { text-align: center; color: #1e3a8a; margin-top: 0; margin-bottom: 15px; font-size: 20px; border-bottom: 2px solid #cbd5e1; padding-bottom: 10px; font-weight: 700; }
+        label { font-weight: 600; display: block; margin-top: 14px; margin-bottom: 6px; color: #475569; font-size: 14px; }
+        input[type="text"], textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; background-color: #f8fafc; color: #334155; -webkit-appearance: none; appearance: none; }
+        textarea { resize: vertical; min-height: 80px; }
+        input:focus, textarea:focus { border-color: #2b6cb0; outline: none; background-color: #fff; box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.15); }
+        
+        .dropdown-container { position: relative; width: 100%; }
+        .dropdown-lista { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; max-height: 220px; overflow-y: auto; z-index: 999; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); margin-top: 4px; }
+        .dropdown-item { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; color: #334155; font-size: 15px; }
+        .dropdown-item:active, .dropdown-item:hover { background-color: #e2e8f0; font-weight: bold; color: #1e3a8a; }
+
+        .info-parque { display: none; background-color: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 10px 14px; border-radius: 8px; margin-top: 8px; font-size: 14px; font-weight: 600; }
+
+        .btn-doble-container { display: flex; gap: 10px; margin-top: 8px; }
+        .foto-section { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 16px 5px; border-radius: 10px; text-align: center; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; flex: 1; min-height: 60px; transition: background 0.2s; }
+        .foto-section:hover { background: #e2e8f0; }
+        .foto-section input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 5; }
+        .foto-label { color: #2b6cb0; font-weight: bold; font-size: 14px; z-index: 1; pointer-events: none; }
+        .status-fotos { text-align: center; margin-top: 8px; font-weight: bold; color: #1e3a8a; font-size: 14px; }
+        
+        button[type="submit"] { width: 100%; background-color: #2f855a; color: white; border: none; padding: 16px; border-radius: 10px; font-size: 18px; font-weight: bold; margin-top: 25px; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        button[type="submit"]:disabled { background-color: #94a3b8; box-shadow: none; }
+        .btn-limpiar { font-size: 12px; color: #ef4444; text-decoration: underline; cursor: pointer; position: relative; z-index: 10; margin-top: 4px; display: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <div class="logo-container">
+        <img src="https://i.postimg.cc/Gm70z8h0/Whats-App-Image-2026-06-01-at-1-51-39-PM-2.jpeg" alt="Logo Necai">
+    </div>
+    <h2>Evidencia de Mantenimiento</h2>
+    
+    <form id="reportForm">
+        <label>Nombre del Supervisor:</label>
+        <input type="text" id="supervisor_input" placeholder="Ej. Juan Pérez" required>
+
+        <label>Busca y Selecciona el Parque:</label>
+        <div class="dropdown-container">
+            <input type="text" id="buscador_parques" placeholder="🔍 Escribe para buscar (Ej. Cristal)..." autocomplete="off" required>
+            <div id="dropdown_lista" class="dropdown-lista">
+                <div class="dropdown-item">Cargando parques...</div>
+            </div>
+            <input type="hidden" id="parque_seleccionado">
+        </div>
+        <div id="infoParque" class="info-parque"></div>
+
+        <label>Descripción del Trabajo Realizado:</label>
+        <textarea id="descripcion_input" placeholder="Ej. Se realizó poda de pasto, deshierbe y limpieza..." required></textarea>
+
+        <input type="hidden" id="gps_coordenadas">
+
+        <!-- ================= SECCIÓN ANTES ================= -->
+        <label>Fotos ANTES del Mantenimiento:</label>
+        <div class="btn-doble-container">
+            <!-- Botón Cámara (SIN multiple) -->
+            <div class="foto-section">
+                <input type="file" accept="image/*" capture="environment" onchange="procesarFotosMultiples(this, 'fotoAntes', 'status_antes', 'btnLimpiarAntes')">
+                <div class="foto-label">📸 Tomar Foto</div>
+            </div>
+            <!-- Botón Galería (CON multiple) -->
+            <div class="foto-section">
+                <input type="file" accept="image/*" multiple onchange="procesarFotosMultiples(this, 'fotoAntes', 'status_antes', 'btnLimpiarAntes')">
+                <div class="foto-label">🖼️ Galería</div>
+            </div>
+        </div>
+        <div id="status_antes" class="status-fotos">0/10 Fotos agregadas</div>
+        <div style="text-align:center;"><span class="btn-limpiar" id="btnLimpiarAntes" onclick="limpiarFotos('fotoAntes', 'status_antes', 'btnLimpiarAntes')">Borrar fotos de esta sección</span></div>
+
+        <!-- ================= SECCIÓN DURANTE ================= -->
+        <label>Fotos DURANTE el Proceso:</label>
+        <div class="btn-doble-container">
+            <!-- Botón Cámara (SIN multiple) -->
+            <div class="foto-section">
+                <input type="file" accept="image/*" capture="environment" onchange="procesarFotosMultiples(this, 'fotoDurante', 'status_durante', 'btnLimpiarDurante')">
+                <div class="foto-label">📸 Tomar Foto</div>
+            </div>
+            <!-- Botón Galería (CON multiple) -->
+            <div class="foto-section">
+                <input type="file" accept="image/*" multiple onchange="procesarFotosMultiples(this, 'fotoDurante', 'status_durante', 'btnLimpiarDurante')">
+                <div class="foto-label">🖼️ Galería</div>
+            </div>
+        </div>
+        <div id="status_durante" class="status-fotos">0/10 Fotos agregadas</div>
+        <div style="text-align:center;"><span class="btn-limpiar" id="btnLimpiarDurante" onclick="limpiarFotos('fotoDurante', 'status_durante', 'btnLimpiarDurante')">Borrar fotos de esta sección</span></div>
+
+        <!-- ================= SECCIÓN DESPUÉS ================= -->
+        <label>Fotos DESPUÉS del Mantenimiento:</label>
+        <div class="btn-doble-container">
+            <!-- Botón Cámara (SIN multiple) -->
+            <div class="foto-section">
+                <input type="file" accept="image/*" capture="environment" onchange="procesarFotosMultiples(this, 'fotoDespues', 'status_despues', 'btnLimpiarDespues')">
+                <div class="foto-label">📸 Tomar Foto</div>
+            </div>
+            <!-- Botón Galería (CON multiple) -->
+            <div class="foto-section">
+                <input type="file" accept="image/*" multiple onchange="procesarFotosMultiples(this, 'fotoDespues', 'status_despues', 'btnLimpiarDespues')">
+                <div class="foto-label">🖼️ Galería</div>
+            </div>
+        </div>
+        <div id="status_despues" class="status-fotos">0/10 Fotos agregadas</div>
+        <div style="text-align:center;"><span class="btn-limpiar" id="btnLimpiarDespues" onclick="limpiarFotos('fotoDespues', 'status_despues', 'btnLimpiarDespues')">Borrar fotos de esta sección</span></div>
+
+        <button type="submit" id="btnSubmit">Enviar Reporte Múltiple</button>
+    </form>
+</div>
+
+<script>
+    let todosLosParques = [];
+    let m2Seleccionado = "No registrado"; 
+    
+    const memoriaFotos = {
+        fotoAntes: [],
+        fotoDurante: [],
+        fotoDespues: []
+    };
+
+    const inputBuscador = document.getElementById('buscador_parques');
+    const listaDropdown = document.getElementById('dropdown_lista');
+    const inputOculto = document.getElementById('parque_seleccionado');
+    const divInfoParque = document.getElementById('infoParque');
+
+    document.addEventListener("DOMContentLoaded", () => {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => document.getElementById('gps_coordenadas').value = `${pos.coords.latitude}, ${pos.coords.longitude}`,
+                (err) => console.warn("GPS denegado")
+            );
+        }
+
+        google.script.run.withSuccessHandler(function(listaParques) {
+            todosLosParques = listaParques;
+            inputBuscador.placeholder = "🔍 Escribe para buscar (Ej. Cristal)...";
+            renderizarLista(todosLosParques);
+        }).obtenerListaParques();
+    });
+
+    function renderizarLista(lista) {
+        listaDropdown.innerHTML = '';
+        if (lista.length === 0) {
+            listaDropdown.innerHTML = '<div class="dropdown-item" style="color:red;">No se encontró ningún parque</div>';
+            return;
+        }
+        lista.forEach(parque => {
+            let div = document.createElement('div');
+            div.className = 'dropdown-item';
+            div.textContent = parque.id + " - " + parque.nombre;
+            div.onclick = function() {
+                inputBuscador.value = div.textContent; 
+                inputOculto.value = parque.id;         
+                m2Seleccionado = parque.m2; 
+                listaDropdown.style.display = 'none';  
+
+                divInfoParque.innerHTML = `📐 Superficie del parque: <b>${parque.m2} m²</b>`;
+                divInfoParque.style.display = 'block';
+            };
+            listaDropdown.appendChild(div);
+        });
+    }
+
+    inputBuscador.addEventListener('input', function(e) {
+        listaDropdown.style.display = 'block';
+        let textoBuscado = e.target.value.toLowerCase();
+        let parquesFiltrados = todosLosParques.filter(parque => 
+            parque.nombre.toLowerCase().includes(textoBuscado) || 
+            parque.id.toString().includes(textoBuscado)
+        );
+        renderizarLista(parquesFiltrados);
+        inputOculto.value = ""; 
+        m2Seleccionado = "No registrado";
+        divInfoParque.style.display = 'none'; 
+    });
+
+    inputBuscador.addEventListener('focus', function() {
+        listaDropdown.style.display = 'block';
+        if (inputBuscador.value === "") {
+            renderizarLista(todosLosParques);
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if(!e.target.closest('.dropdown-container')) {
+            listaDropdown.style.display = 'none';
+        }
+    });
+
+    function procesarFotosMultiples(input, categoria, statusId, btnLimpiarId) {
+        if (!input.files || input.files.length === 0) return;
+        let archivosNuevos = Array.from(input.files);
+        let limite = 10;
+        
+        if (memoriaFotos[categoria].length + archivosNuevos.length > limite) {
+            alert(`Solo puedes subir un máximo de ${limite} fotos por sección.`);
+            input.value = ""; 
+            return;
+        }
+
+        document.getElementById(statusId).innerText = "⏳ Procesando imágenes...";
+        let procesadas = 0;
+        
+        archivosNuevos.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    let ancho = img.width, alto = img.height, maxAncho = 1280;
+                    if (ancho > maxAncho) { alto = Math.round((alto * maxAncho) / ancho); ancho = maxAncho; }
+                    canvas.width = ancho; canvas.height = alto;
+                    ctx.drawImage(img, 0, 0, ancho, alto);
+                    
+                    memoriaFotos[categoria].push(canvas.toDataURL('image/jpeg', 0.7).split(',')[1]);
+                    procesadas++;
+                    
+                    if(procesadas === archivosNuevos.length) {
+                        let total = memoriaFotos[categoria].length;
+                        document.getElementById(statusId).innerText = `✅ ${total}/10 Fotos agregadas`;
+                        document.getElementById(btnLimpiarId).style.display = "inline-block";
+                        input.value = ""; 
+                    }
+                };
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function limpiarFotos(categoria, statusId, btnLimpiarId) {
+        memoriaFotos[categoria] = [];
+        document.getElementById(statusId).innerText = "0/10 Fotos agregadas";
+        document.getElementById(btnLimpiarId).style.display = "none";
+    }
+
+    document.getElementById('reportForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        let idExtraido = inputOculto.value;
+
+        if(!idExtraido) {
+            alert("Por favor selecciona un parque válido de la lista desplegable.");
+            return;
+        }
+
+        const btn = document.getElementById('btnSubmit');
+        btn.disabled = true;
+        btn.innerText = "⏳ Subiendo reporte y fotos...";
+
+        const payload = {
+            fecha: new Date().toISOString().split('T')[0], 
+            supervisor: document.getElementById('supervisor_input').value,
+            inventario: idExtraido,
+            m2_parque: m2Seleccionado, 
+            gps_coordenadas: document.getElementById('gps_coordenadas').value,
+            descripcion: document.getElementById('descripcion_input').value,
+            fotoAntes: memoriaFotos['fotoAntes'],
+            fotoDurante: memoriaFotos['fotoDurante'],
+            fotoDespues: memoriaFotos['fotoDespues']
+        };
+
+        google.script.run
+            .withSuccessHandler(function(response) {
+                if(response.result === "success") {
+                    btn.innerText = "✅ Reporte Enviado con Éxito";
+                    btn.style.backgroundColor = "#16a34a";
+                    setTimeout(() => { 
+                        document.getElementById('reportForm').reset(); 
+                        inputOculto.value = "";
+                        m2Seleccionado = "No registrado";
+                        divInfoParque.style.display = 'none'; 
+                        
+                        limpiarFotos('fotoAntes', 'status_antes', 'btnLimpiarAntes');
+                        limpiarFotos('fotoDurante', 'status_durante', 'btnLimpiarDurante');
+                        limpiarFotos('fotoDespues', 'status_despues', 'btnLimpiarDespues');
+                        
+                        btn.disabled = false; 
+                        btn.innerText = "Enviar Reporte Múltiple"; 
+                        btn.style.backgroundColor = "#2f855a"; 
+                    }, 3000);
+                } else {
+                    alert("Error al subir: " + response.error);
+                    btn.disabled = false; btn.innerText = "Reintentar";
+                }
+            })
+            .withFailureHandler(function(error) {
+                alert("Hubo un fallo de conexión. Intenta en una zona con mejor señal.");
+                btn.disabled = false; btn.innerText = "Reintentar";
+            })
+            .procesarDesdeFront(JSON.stringify(payload));
+    });
+</script>
+
+</body>
+</html>
+<script>
+    
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyDBjQxntm_pUu_3hCEcPyA3ZmnPFIlHw81DH3bUmiIUNr4E4J4klvD0pX86z7nlsD7Ug/exec";
+
+    // fecha automática en el sistema
+    document.getElementById('fecha_automatica').value = new Date().toLocaleString('es-MX');
+
+    // Lista Completa Extraída Directamente de la pestaña DESGLOCE (298 Parques)
+    const baseParques = [
+        {"inv": "1", "name": "Canchas Cristal", "deleg": "Santa Rosa Jáuregui", "gps": "20.746333,-100.445757"},
+        {"inv": "2", "name": "Jardineras frente al mercado SRJ", "deleg": "Santa Rosa Jáuregui", "gps": "20.744210,-100.449389"},
+        {"inv": "3", "name": "Jardín Principal Santa Rosa Jáuregui", "deleg": "Santa Rosa Jáuregui", "gps": "20.741727,-100.447184"},
+        {"inv": "4", "name": "Parque Privada Juriquilla", "deleg": "Santa Rosa Jáuregui", "gps": "20.724382,-100.444512"},
+        {"inv": "5", "name": "Jardín Altavista", "deleg": "Santa Rosa Jáuregui", "gps": "20.720589,-100.441302"},
+        {"inv": "6", "name": "Jardineras de acceso a Santa Rosa Jáuregui", "deleg": "Santa Rosa Jáuregui", "gps": "20.740889,-100.443905"},
+        {"inv": "6", "name": "Parque Punta Juriquilla", "deleg": "Santa Rosa Jáuregui", "gps": "20.7156, -100.4431"},
+        {"inv": "7", "name": "Residencial Caletto 3", "deleg": "Santa Rosa Jáuregui", "gps": "20.708732,-100.443525"},
+        {"inv": "8", "name": "Residencial Caletto 4", "deleg": "Santa Rosa Jáuregui", "gps": "20.709688,-100.442598"},
+        {"inv": "9", "name": "Residencial Caletto 6", "deleg": "Santa Rosa Jáuregui", "gps": "20.710516,-100.443700"},
+        {"inv": "10", "name": "Parque La Lagartija", "deleg": "Santa Rosa Jáuregui", "gps": "20.714010,-100.445322"},
+        {"inv": "11", "name": "Parque San Francisco Juriquilla", "deleg": "Santa Rosa Jáuregui", "gps": "20.697197,-100.451187"},
+        {"inv": "12", "name": "San Francisco B", "deleg": "Santa Rosa Jáuregui", "gps": "20.702389,-100.449870"},
+        {"inv": "13", "name": "Parque Santa Fé", "deleg": "Santa Rosa Jáuregui", "gps": "20.695742,-100.445222"},
+        {"inv": "14", "name": "Los Portones", "deleg": "Félix Osores Sotomayor", "gps": "20.6865, -100.45251"},
+        {"inv": "15", "name": "Valle de Juriquilla", "deleg": "Félix Osores Sotomayor", "gps": "20.686982,-100.442144"},
+        {"inv": "16", "name": "Parque La Carbonera", "deleg": "Santa Rosa Jáuregui", "gps": "20.809058,-100.502095"},
+        {"inv": "17", "name": "Parque Buena Vista", "deleg": "Santa Rosa Jáuregui", "gps": "20.821108,-100.469006"},
+        {"inv": "18", "name": "Parque Pinto", "deleg": "Santa Rosa Jáuregui", "gps": "20.803752,-100.409159"},
+        {"inv": "19", "name": "Parque Corea", "deleg": "Santa Rosa Jáuregui", "gps": "20.802903,-100.452805"},
+        {"inv": "20", "name": "Parque Santa Catarina", "deleg": "Santa Rosa Jáuregui", "gps": "20.776570,-100.452221"},
+        {"inv": "21", "name": "Área verde Hacienda Santa Rosa", "deleg": "Santa Rosa Jáuregui", "gps": "20.769328,-100.437075"},
+        {"inv": "22", "name": "Hacienda Santa Rosa V", "deleg": "Santa Rosa Jáuregui", "gps": "20.769317,-100.434363 20.771259,-100.434623"},
+        {"inv": "23", "name": "Hacienda Santa Rosa I Y II", "deleg": "Santa Rosa Jáuregui", "gps": "20.766311,-100.439694 20.767082,-100.438053"},
+        {"inv": "24", "name": "Parque Jurica Pueblo", "deleg": "Félix Osores Sotomayor", "gps": "20.676532,-100.457892"},
+        {"inv": "25", "name": "Parque Arboretum", "deleg": "Félix Osores Sotomayor", "gps": "20.673963,-100.452339"},
+        {"inv": "26", "name": "Parque Ciruelos", "deleg": "Félix Osores Sotomayor", "gps": "20.665353,-100.441242"},
+        {"inv": "27", "name": "Parque La Paloma", "deleg": "Félix Osores Sotomayor", "gps": "20.650830,-100.439961"},
+        {"inv": "28", "name": "El Rocío Andador Manantial", "deleg": "Félix Osores Sotomayor", "gps": "20.621333,-100.443948"},
+        {"inv": "29", "name": "Parque Bonn", "deleg": "Félix Osores Sotomayor", "gps": "20.623672,-100.442987"},
+        {"inv": "30", "name": "Parque Canterbury", "deleg": "Félix Osores Sotomayor", "gps": "20.623377,-100.444601"},
+        {"inv": "31", "name": "Jardín y Cancha Liorna", "deleg": "Félix Osores Sotomayor", "gps": "20.625442,-100.443158"},
+        {"inv": "32", "name": "Plaza Cívica y Área Verde Los Sauces", "deleg": "Félix Osores Sotomayor", "gps": "20.625723,-100.444892"},
+        {"inv": "33", "name": "Sauces (Copenhague y Estocolmo)", "deleg": "Félix Osores Sotomayor", "gps": "20.624751,-100.446354"},
+        {"inv": "34", "name": "Parque Zaragoza", "deleg": "Félix Osores Sotomayor", "gps": "20.628415,-100.445504"},
+        {"inv": "35", "name": "Parque Bilbao", "deleg": "Félix Osores Sotomayor", "gps": "20.629902,-100.443229"},
+        {"inv": "36", "name": "Limones La Huerta", "deleg": "Félix Osores Sotomayor", "gps": "20.618984,-100.449282"},
+        {"inv": "37", "name": "Puertas del Sol II", "deleg": "Félix Osores Sotomayor", "gps": "20.617923,-100.448325"},
+        {"inv": "38", "name": "Parque Cachos (Fundadores)", "deleg": "Félix Osores Sotomayor", "gps": "20.627791,-100.449464"},
+        {"inv": "39", "name": "Parque Viaducto-Industrial", "deleg": "Félix Osores Sotomayor", "gps": "20.620488,-100.429519"},
+        {"inv": "40", "name": "Parque Teotihuacanos (Parque Mantarraya)", "deleg": "Félix Osores Sotomayor", "gps": "20.631879,-100.461272"},
+        {"inv": "41", "name": "Parque Chichimecas", "deleg": "Félix Osores Sotomayor", "gps": "20.632565,-100.459572"},
+        {"inv": "42", "name": "Parque Santiago Etapa 1", "deleg": "Félix Osores Sotomayor", "gps": "20.629318,-100.457514"},
+        {"inv": "43", "name": "Parque Santiago Etapa 3", "deleg": "Félix Osores Sotomayor", "gps": "20.628652,-100.457377"},
+        {"inv": "44", "name": "Parque Santiago Etapa 4", "deleg": "Félix Osores Sotomayor", "gps": "20.628091,-100.455135 20.627862,-100.453796"},
+        {"inv": "45", "name": "Parque Santiago Etapa 2", "deleg": "Félix Osores Sotomayor", "gps": "20.629859,-100.453461"},
+        {"inv": "46", "name": "Parque Geoplazas", "deleg": "Félix Osores Sotomayor", "gps": "20.625520,-100.457272"},
+        {"inv": "47", "name": "Parque Farallón", "deleg": "Félix Osores Sotomayor", "gps": "20.630085,-100.453339 20.629395,-100.453139"},
+        {"inv": "48", "name": "Camellón Ingenio Lazaro Cardenas", "deleg": "Félix Osores Sotomayor", "gps": "20.619923,-100.470694"},
+        {"inv": "49", "name": "Cancha 8", "deleg": "Félix Osores Sotomayor", "gps": "20.619710,-100.467281"},
+        {"inv": "50", "name": "Calle 8 (Calle 8 S/N)", "deleg": "Félix Osores Sotomayor", "gps": "20.619968,-100.466728"},
+        {"inv": "51", "name": "Parque Colinas de Santa Cruz", "deleg": "Félix Osores Sotomayor", "gps": "20.624555,-100.470620"},
+        {"inv": "52", "name": "Parque Che Guevara", "deleg": "Félix Osores Sotomayor", "gps": "20.627167,-100.470570"},
+        {"inv": "53", "name": "Parque Loma VIII", "deleg": "Félix Osores Sotomayor", "gps": "20.628786,-100.469054"},
+        {"inv": "54", "name": "Parque Monte Himalaya", "deleg": "Félix Osores Sotomayor", "gps": "20.626997,-100.467629"},
+        {"inv": "55", "name": "Parque Remedios Varo", "deleg": "Félix Osores Sotomayor", "gps": "20.633625,-100.473344"},
+        {"inv": "56", "name": "Plaza Pública Tepehuas", "deleg": "Félix Osores Sotomayor", "gps": "20.635695,-100.458097"},
+        {"inv": "57", "name": "Ex Hacienda Santana", "deleg": "Félix Osores Sotomayor", "gps": "20.637618,-100.461920"},
+        {"inv": "58", "name": "Cancha Ex Hacienda Santana", "deleg": "Félix Osores Sotomayor", "gps": "20.637992,-100.460448"},
+        {"inv": "59", "name": "Parque Ex Hacienda Santa Ana II", "deleg": "Félix Osores Sotomayor", "gps": "20.638058,-100.459676"},
+        {"inv": "60", "name": "Parque Choles", "deleg": "Félix Osores Sotomayor", "gps": "20.639264,-100.469050"},
+        {"inv": "61", "name": "Parque La Loma", "deleg": "Félix Osores Sotomayor", "gps": "20.640981,-100.469096"},
+        {"inv": "62", "name": "Real Del Marqués", "deleg": "Félix Osores Sotomayor", "gps": "20.649837,-100.472295"},
+        {"inv": "63", "name": "Parque Misión Carrillo", "deleg": "Félix Osores Sotomayor", "gps": "20.645385,-100.463521"},
+        {"inv": "64", "name": "Parque El Romerillal", "deleg": "Félix Osores Sotomayor", "gps": "20.6473, -100.4621"},
+        {"inv": "65", "name": "Parque Villas de San Miguel", "deleg": "Félix Osores Sotomayor", "gps": "20.647029,-100.459497"},
+        {"inv": "66", "name": "Parque Libertadores", "deleg": "Félix Osores Sotomayor", "gps": "20.651006,-100.452764"},
+        {"inv": "67", "name": "Parque 15 de Mayo", "deleg": "Félix Osores Sotomayor", "gps": "20.654248,-100.457185"},
+        {"inv": "68", "name": "Jardines de Jurica", "deleg": "Félix Osores Sotomayor", "gps": "20.661411,-100.455863"},
+        {"inv": "69", "name": "Parque Morelos", "deleg": "Félix Osores Sotomayor", "gps": "20.646712,-100.456948"},
+        {"inv": "70", "name": "Espacio Deportivo Miguel Hidalgo", "deleg": "Félix Osores Sotomayor", "gps": "20.644981,-100.458469"},
+        {"inv": "71", "name": "La Peña CTM", "deleg": "Félix Osores Sotomayor", "gps": "20.643043,-100.459941"},
+        {"inv": "72", "name": "Parque Crestón", "deleg": "Félix Osores Sotomayor", "gps": "20.641977,-100.448857"},
+        {"inv": "73", "name": "Lomas de Satelite (Parque Pirineos)", "deleg": "Félix Osores Sotomayor", "gps": "20.642509,-100.446487"},
+        {"inv": "74", "name": "Juriquilla La Condesa", "deleg": "Santa Rosa Jáuregui", "gps": "20.692862,-100.463754 20.691709,-100.462945"},
+        {"inv": "297", "name": "Jardineras estacionamiento del Parque Bicentenario", "deleg": "Santa Rosa Jáuregui", "gps": "20.735306,-100.448453"},
+        {"inv": "75", "name": "Parque Alfalfares", "deleg": "Félix Osores Sotomayor", "gps": "20.623545,-100.450822"},
+        {"inv": "76", "name": "Parque Alfalfares Reserva", "deleg": "Félix Osores Sotomayor", "gps": "20.621739,-100.452386"},
+        {"inv": "77", "name": "Misión de Mayorazgo", "deleg": "Felipe Carrillo Puerto", "gps": "20.644859,-100.483716"},
+        {"inv": "78", "name": "Parque Benito Juárez", "deleg": "Felipe Carrillo Puerto", "gps": "20.632691,-100.478635"},
+        {"inv": "79", "name": "Patria Nueva", "deleg": "Felipe Carrillo Puerto", "gps": "20.632531,-100.477008"},
+        {"inv": "80", "name": "La Loma IX", "deleg": "Felipe Carrillo Puerto", "gps": "20.623282,-100.476234"},
+        {"inv": "81", "name": "Parque Lineal Pulmón Poesía", "deleg": "Felipe Carrillo Puerto", "gps": "20.613276,-100.441713"},
+        {"inv": "82", "name": "Área verde y canchas Plutarco Elías Calles", "deleg": "Felipe Carrillo Puerto", "gps": "20.611878,-100.442636"},
+        {"inv": "83", "name": "Parque Libertad", "deleg": "Felipe Carrillo Puerto", "gps": "20.610675,-100.429423"},
+        {"inv": "84", "name": "Parque El Sol", "deleg": "Felipe Carrillo Puerto", "gps": "20.615878,-100.447152"},
+        {"inv": "85", "name": "Parque Bosques del Sol", "deleg": "Felipe Carrillo Puerto", "gps": "20.614167,-100.440533"},
+        {"inv": "86", "name": "Parque Lineal Pulmón Vía Láctea​", "deleg": "Felipe Carrillo Puerto", "gps": "20.606107,-100.432561"},
+        {"inv": "87", "name": "Explanada de La Delegación", "deleg": "Felipe Carrillo Puerto", "gps": "20.605911,-100.428829"},
+        {"inv": "88", "name": "Calle Plata", "deleg": "Felipe Carrillo Puerto", "gps": "20.603398,-100.433655"},
+        {"inv": "89", "name": "Área Verde Torrente 1", "deleg": "Felipe Carrillo Puerto", "gps": "20.602831,-100.435268"},
+        {"inv": "90", "name": "Área Verde Torrente 2", "deleg": "Felipe Carrillo Puerto", "gps": "20.603539,-100.432297"},
+        {"inv": "91", "name": "Área Verde Río 1", "deleg": "Felipe Carrillo Puerto", "gps": "20.601765,-100.434989"},
+        {"inv": "92", "name": "Área Verde Río 2", "deleg": "Felipe Carrillo Puerto", "gps": "20.602520,-100.431936"},
+        {"inv": "93", "name": "Área verde Mar 1", "deleg": "Felipe Carrillo Puerto", "gps": "20.600975,-100.435719"},
+        {"inv": "94", "name": "Área verde Mar 2", "deleg": "Felipe Carrillo Puerto", "gps": "20.601510,-100.433387"},
+        {"inv": "95", "name": "Parque Santa Mónica II", "deleg": "Felipe Carrillo Puerto", "gps": "20.601142,-100.441890"},
+        {"inv": "96", "name": "Área Verde Brasil", "deleg": "Felipe Carrillo Puerto", "gps": "20.598235,-100.447685"},
+        {"inv": "97", "name": "Parque La Aurora", "deleg": "Felipe Carrillo Puerto", "gps": "20.595318,-100.451219"},
+        {"inv": "98", "name": "Jardines del Valle", "deleg": "Felipe Carrillo Puerto", "gps": "20.594862,-100.449294"},
+        {"inv": "99", "name": "Las Teresas", "deleg": "Felipe Carrillo Puerto", "gps": "20.596988,-100.433173"},
+        {"inv": "100", "name": "Fuentes Residencial", "deleg": "Felipe Carrillo Puerto", "gps": "20.595558,-100.426999"},
+        {"inv": "101", "name": "Rinconada Santa Anita", "deleg": "Felipe Carrillo Puerto", "gps": "20.599924,-100.425032"},
+        {"inv": "102", "name": "Avenida Trenista", "deleg": "Felipe Carrillo Puerto", "gps": "20.599317,-100.426730"},
+        {"inv": "103", "name": "El Maurel", "deleg": "Felipe Carrillo Puerto", "gps": "20.594834,-100.425023"},
+        {"inv": "104", "name": "Plazoleta 2, acceso a Carrillo", "deleg": "Felipe Carrillo Puerto", "gps": "20.603859,-100.418047"},
+        {"inv": "105", "name": "Plazoleta En Acceso a Av. San Diego y 5 de Febrero", "deleg": "Felipe Carrillo Puerto", "gps": "20.595583,-100.415728"},
+        {"inv": "106", "name": "Parque El Sillar", "deleg": "Felipe Carrillo Puerto", "gps": "20.589358,-100.413871"},
+        {"inv": "107", "name": "Circuito Santiago", "deleg": "Felipe Carrillo Puerto", "gps": "20.589489,-100.414892"},
+        {"inv": "108", "name": "Santa Clara (Oeste)", "deleg": "Felipe Carrillo Puerto", "gps": "20.587698,-100.414910"},
+        {"inv": "109", "name": "Santa Clara 2 (Este)", "deleg": "Felipe Carrillo Puerto", "gps": "20.587472,-100.413975"},
+        {"inv": "110", "name": "Residencial Italia", "deleg": "Felipe Carrillo Puerto", "gps": "20.588754,-100.417258"},
+        {"inv": "111", "name": "Fraccionamiento Carolinas", "deleg": "Felipe Carrillo Puerto", "gps": "20.583064,-100.419328"},
+        {"inv": "112", "name": "Parque Villas de San Antonio", "deleg": "Felipe Carrillo Puerto", "gps": "20.582270,-100.423959"},
+        {"inv": "113", "name": "Villas de La Carambada", "deleg": "Felipe Carrillo Puerto", "gps": "20.583950,-100.422574"},
+        {"inv": "114", "name": "Parque Frida Kahlo", "deleg": "Felipe Carrillo Puerto", "gps": "20.577662,-100.420209"},
+        {"inv": "115", "name": "Plutarco Elias Calles", "deleg": "Felipe Carrillo Puerto", "gps": "20.606099,-100.435580"},
+        {"inv": "116", "name": "Prados de La Capilla", "deleg": "Felipe Carrillo Puerto", "gps": "20.579003,-100.409474"},
+        {"inv": "117", "name": "Canchas Deportivas y Juegos Infantiles San Isidro El Alto", "deleg": "Felipe Carrillo Puerto", "gps": "20.716852,-100.527745"},
+        {"inv": "118", "name": "Parque Tinaja de La Estancia", "deleg": "Felipe Carrillo Puerto", "gps": "20.713176,-100.560622"},
+        {"inv": "119", "name": "Parque Tlacote El Alto", "deleg": "Felipe Carrillo Puerto", "gps": "20.690896,-100.521638"},
+        {"inv": "120", "name": "Santo Niño de Praga", "deleg": "Felipe Carrillo Puerto", "gps": "20.668959,-100.513202"},
+        {"inv": "121", "name": "Virrey de Revillagigedo", "deleg": "Felipe Carrillo Puerto", "gps": "20.578099,-100.407304"},
+        {"inv": "122", "name": "Virrey de Bucarelli", "deleg": "Felipe Carrillo Puerto", "gps": "20.578410,-100.406095"},
+        {"inv": "123", "name": "Parque Rancho Bellavista", "deleg": "Felipe Carrillo Puerto", "gps": "20.606324,-100.449738"},
+        {"inv": "124", "name": "Jardín Hacienda La Muralla", "deleg": "Josefa Vergara y Hernández", "gps": "20.573563,-100.410375"},
+        {"inv": "125", "name": "Parque Jardines de la Hacienda", "deleg": "Josefa Vergara y Hernández", "gps": "20.571015,-100.413157"},
+        {"inv": "126", "name": "Parque de perros", "deleg": "Josefa Vergara y Hernández", "gps": "20.572175,-100.411629"},
+        {"inv": "127", "name": "Plaza San Sebastián", "deleg": "Josefa Vergara y Hernández", "gps": "20.571913,-100.416878"},
+        {"inv": "128", "name": "Jardín Plaza Mayor", "deleg": "Josefa Vergara y Hernández", "gps": "20.570177,-100.416694"},
+        {"inv": "129", "name": "Jardín Plaza Constitución", "deleg": "Josefa Vergara y Hernández", "gps": "20.572097,-100.417777"},
+        {"inv": "130", "name": "Parque Las Plazas", "deleg": "Josefa Vergara y Hernández", "gps": "20.569341,-100.415731"},
+        {"inv": "131", "name": "Unidad deportiva La Joya", "deleg": "Josefa Vergara y Hernández", "gps": "20.570755,-100.418124"},
+        {"inv": "132", "name": "Parque La Joya II", "deleg": "Josefa Vergara y Hernández", "gps": "20.570477,-100.419186"},
+        {"inv": "133", "name": "Parque la Joya I", "deleg": "Josefa Vergara y Hernández", "gps": "20.567423,-100.419968"},
+        {"inv": "134", "name": "Parque Mansiones del Valle", "deleg": "Josefa Vergara y Hernández", "gps": "20.565800,-100.417800"},
+        {"inv": "135", "name": "Misión La Joya I", "deleg": "Josefa Vergara y Hernández", "gps": "20.574799,-100.424398"},
+        {"inv": "136", "name": "Misión La Joya II", "deleg": "Josefa Vergara y Hernández", "gps": "20.574600,-100.427313"},
+        {"inv": "137", "name": "Parque Unión Magisterial", "deleg": "Josefa Vergara y Hernández", "gps": "20.562164,-100.416527"},
+        {"inv": "138", "name": "Parque Colonia Del Valle", "deleg": "Josefa Vergara y Hernández", "gps": "20.563237,-100.411347"},
+        {"inv": "139", "name": "Prados del Campestre", "deleg": "Josefa Vergara y Hernández", "gps": "20.566618,-100.410224"},
+        {"inv": "140", "name": "Andador Lomas de Querétaro", "deleg": "Josefa Vergara y Hernández", "gps": "20.571314,-100.404535"},
+        {"inv": "141", "name": "Av. Luis Vega y Monroy", "deleg": "Josefa Vergara y Hernández", "gps": "20.577311,-100.375390"},
+        {"inv": "142", "name": "Parque Lineal Av. 4", "deleg": "Josefa Vergara y Hernández", "gps": "20.574521,-100.389491"},
+        {"inv": "143", "name": "Canchas Burocrata", "deleg": "Josefa Vergara y Hernández", "gps": "20.573898,-100.384195"},
+        {"inv": "144", "name": "Jardín Burócrata", "deleg": "Josefa Vergara y Hernández", "gps": "20.572276,-100.384047"},
+        {"inv": "145", "name": "Parque Las Plazas 1a. Sección", "deleg": "Josefa Vergara y Hernández", "gps": "20.577856,-100.374614"},
+        {"inv": "146", "name": "Plazas del Sol 2da. Sección", "deleg": "Josefa Vergara y Hernández", "gps": "20.572300,-100.375500"},
+        {"inv": "147", "name": "Parque Colinas Del Cimatario", "deleg": "Josefa Vergara y Hernández", "gps": "20.563969,-100.371053"},
+        {"inv": "148", "name": "Colinas del Cimatario 2", "deleg": "Josefa Vergara y Hernández", "gps": "20.560210,-100.368420"},
+        {"inv": "149", "name": "Parque Lineal Av. Del Parque", "deleg": "Josefa Vergara y Hernández", "gps": "20.563499,-100.375850"},
+        {"inv": "150", "name": "Parque Azteca", "deleg": "Josefa Vergara y Hernández", "gps": "20.560208,-100.384212 20.559109,-100.384047"},
+        {"inv": "151", "name": "Área verde en Acamapichtli y Xocoyotzin", "deleg": "Josefa Vergara y Hernández", "gps": "20.558348,-100.383913"},
+        {"inv": "152", "name": "Área verde en Cuauhtémoc, entre Axayacatl y Acamapichtli", "deleg": "Josefa Vergara y Hernández", "gps": "20.559360,-100.385211"},
+        {"inv": "153", "name": "Kiosko de la Reforma Agraria", "deleg": "Josefa Vergara y Hernández", "gps": "20.563481,-100.395095"},
+        {"inv": "154", "name": "Arte Mexicano", "deleg": "Josefa Vergara y Hernández", "gps": "20.559398,-100.387186"},
+        {"inv": "155", "name": "Plaza Marqués Queretano", "deleg": "Josefa Vergara y Hernández", "gps": "20.557424,-100.390307"},
+        {"inv": "156", "name": "Lomas del Valle 2", "deleg": "Josefa Vergara y Hernández", "gps": "20.555755,-100.389349"},
+        {"inv": "157", "name": "Altos Cimatario", "deleg": "Josefa Vergara y Hernández", "gps": "20.552594,-100.388590"},
+        {"inv": "158", "name": "Fraternidad de Santiago", "deleg": "Josefa Vergara y Hernández", "gps": "20.556029,-100.384167"},
+        {"inv": "159", "name": "Juegos Infantiles Circuito General Lázaro Cárdenas", "deleg": "Josefa Vergara y Hernández", "gps": "20.556501,-100.380781"},
+        {"inv": "160", "name": "Parque Roma", "deleg": "Josefa Vergara y Hernández", "gps": "20.554838,-100.378561"},
+        {"inv": "161", "name": "Universo 2000", "deleg": "Josefa Vergara y Hernández", "gps": "20.550967,-100.382373"},
+        {"inv": "162", "name": "Parque Campestre Italiana Área cancha 1", "deleg": "Josefa Vergara y Hernández", "gps": "20.545050,-100.377425"},
+        {"inv": "163", "name": "Parque Campestre Italiana", "deleg": "Josefa Vergara y Hernández", "gps": "20.546361,-100.374939"},
+        {"inv": "164", "name": "Pedregal de Vista Hermosa Cerro Largo", "deleg": "Josefa Vergara y Hernández", "gps": "20.587498,-100.356996"},
+        {"inv": "165", "name": "Pedregal de Vista Hermosa Peña Flor", "deleg": "Josefa Vergara y Hernández", "gps": "20.587096,-100.355776"},
+        {"inv": "166", "name": "Área verde Chabacano", "deleg": "Josefa Vergara y Hernández", "gps": "20.558454,-100.402672"},
+        {"inv": "296", "name": "Centro Cívico", "deleg": "Josefa Vergara y Hernández", "gps": "20.558769,-100.360567"},
+        {"inv": "167", "name": "Pulmón Loma Dorada", "deleg": "Villa Cayetano Rubio", "gps": "20.595218,-100.364463"},
+        {"inv": "168", "name": "Camino Real de Carretas 1", "deleg": "Villa Cayetano Rubio", "gps": "20.599690,-100.367927"},
+        {"inv": "169", "name": "Camino Real de Carretas 2", "deleg": "Villa Cayetano Rubio", "gps": "20.600610,-100.366259"},
+        {"inv": "170", "name": "Sendero de la Herradura", "deleg": "Villa Cayetano Rubio", "gps": "20.599938,-100.366902"},
+        {"inv": "171", "name": "Jardín del Arte", "deleg": "Villa Cayetano Rubio", "gps": "20.598061,-100.363939"},
+        {"inv": "172", "name": "Senda de Balcones", "deleg": "Villa Cayetano Rubio", "gps": "20.596447,-100.362713"},
+        {"inv": "173", "name": "Sendero del Alféizar", "deleg": "Villa Cayetano Rubio", "gps": "20.597869,-100.362902"},
+        {"inv": "174", "name": "Sendero de las Misiones", "deleg": "Villa Cayetano Rubio", "gps": "20.596069,-100.360101"},
+        {"inv": "175", "name": "Sendero del Retiro", "deleg": "Villa Cayetano Rubio", "gps": "20.595123,-100.357362"},
+        {"inv": "176", "name": "Sendero del Campanario", "deleg": "Villa Cayetano Rubio", "gps": "20.595521,-100.356064"},
+        {"inv": "177", "name": "Sendero del Secreto", "deleg": "Villa Cayetano Rubio", "gps": "20.595084,-100.354594"},
+        {"inv": "178", "name": "Senda Eterna 1", "deleg": "Villa Cayetano Rubio", "gps": "20.594520,-100.353670"},
+        {"inv": "179", "name": "Sendero del Alma", "deleg": "Villa Cayetano Rubio", "gps": "20.595427,-100.351772"},
+        {"inv": "180", "name": "Sendero de la Alegría", "deleg": "Villa Cayetano Rubio", "gps": "20.594249,-100.352344"},
+        {"inv": "181", "name": "Senda Eterna y del Infinito", "deleg": "Villa Cayetano Rubio", "gps": "20.596550,-100.343207"},
+        {"inv": "182", "name": "Parque La cañada", "deleg": "Villa Cayetano Rubio", "gps": "20.594383,-100.350139"},
+        {"inv": "183", "name": "Parque Arquitos", "deleg": "Villa Cayetano Rubio", "gps": "20.593096,-100.352277"},
+        {"inv": "184", "name": "Parque Arquitos II", "deleg": "Villa Cayetano Rubio", "gps": "20.593095,-100.352948"},
+        {"inv": "185", "name": "Sendero Soleado", "deleg": "Villa Cayetano Rubio", "gps": "20.592759,-100.351169"},
+        {"inv": "186", "name": "Senda Eterna 2", "deleg": "Villa Cayetano Rubio", "gps": "20.592207,-100.350872"},
+        {"inv": "187", "name": "Senda Eterna 3", "deleg": "Villa Cayetano Rubio", "gps": "20.592110,-100.350441"},
+        {"inv": "188", "name": "Sendero del Alba", "deleg": "Villa Cayetano Rubio", "gps": "20.591702,-100.350269"},
+        {"inv": "189", "name": "Sendero de la Escarcha", "deleg": "Villa Cayetano Rubio", "gps": "20.591055,-100.350559"},
+        {"inv": "190", "name": "Sendero del Eclipse", "deleg": "Villa Cayetano Rubio", "gps": "20.590700,-100.350806"},
+        {"inv": "191", "name": "Senda Eterna 4", "deleg": "Villa Cayetano Rubio", "gps": "20.591787,-100.349417"},
+        {"inv": "192", "name": "Sendero del Reflejo", "deleg": "Villa Cayetano Rubio", "gps": "20.590564,-100.347865"},
+        {"inv": "193", "name": "Senda Eterna 5", "deleg": "Villa Cayetano Rubio", "gps": "20.591174,-100.348363"},
+        {"inv": "194", "name": "Sendero de la Ternura", "deleg": "Villa Cayetano Rubio", "gps": "20.592251,-100.348732"},
+        {"inv": "195", "name": "Sendero de las Brisas", "deleg": "Villa Cayetano Rubio", "gps": "20.591870,-100.346733"},
+        {"inv": "196", "name": "Sendero del Caminante", "deleg": "Villa Cayetano Rubio", "gps": "20.592554,-100.345722"},
+        {"inv": "197", "name": "Senda Eterna 6", "deleg": "Villa Cayetano Rubio", "gps": "20.592736,-100.344321"},
+        {"inv": "198", "name": "Sendero del Destino", "deleg": "Villa Cayetano Rubio", "gps": "20.598208,-100.344633"},
+        {"inv": "199", "name": "Sendero Otoñal", "deleg": "Villa Cayetano Rubio", "gps": "20.593683,-100.345375"},
+        {"inv": "200", "name": "Sendero Sutil", "deleg": "Villa Cayetano Rubio", "gps": "20.594280,-100.347286"},
+        {"inv": "201", "name": "Sendero Luna Nueva ", "deleg": "Villa Cayetano Rubio", "gps": "20.594955,-100.345011"},
+        {"inv": "202", "name": "Senda Celestial ", "deleg": "Villa Cayetano Rubio", "gps": "20.595362,-100.344202"},
+        {"inv": "203", "name": "Senda Celestial 2 ", "deleg": "Villa Cayetano Rubio", "gps": "20.596032,-100.343859"},
+        {"inv": "204", "name": "Sendero de La Fortuna 1", "deleg": "Villa Cayetano Rubio", "gps": "20.596131,-100.347189"},
+        {"inv": "205", "name": "Sendero de La Fortuna 2", "deleg": "Villa Cayetano Rubio", "gps": "20.596056,-100.348065"},
+        {"inv": "206", "name": "Camino Real de Carretas 3", "deleg": "Villa Cayetano Rubio", "gps": "20.595657,-100.348849"},
+        {"inv": "207", "name": "Delicias", "deleg": "Villa Cayetano Rubio", "gps": "20.598055,-100.345882"},
+        {"inv": "208", "name": "Senda de La Pasión", "deleg": "Villa Cayetano Rubio", "gps": "20.598288,-100.347065"},
+        {"inv": "209", "name": "Sagrario", "deleg": "Villa Cayetano Rubio", "gps": "20.597476,-100.348351"},
+        {"inv": "210", "name": "Sendero del Verso", "deleg": "Villa Cayetano Rubio", "gps": "20.596929,-100.350233"},
+        {"inv": "211", "name": "Sendero del Halago ", "deleg": "Villa Cayetano Rubio", "gps": "20.597234,-100.352081"},
+        {"inv": "212", "name": "Camino Real de Carretas 4", "deleg": "Villa Cayetano Rubio", "gps": "20.596463,-100.352158"},
+        {"inv": "213", "name": "Camino Real de Carretas 5", "deleg": "Villa Cayetano Rubio", "gps": "20.595913,-100.356521"},
+        {"inv": "214", "name": "Camino Real de Carretas 6", "deleg": "Villa Cayetano Rubio", "gps": "20.596486,-100.359127"},
+        {"inv": "215", "name": "Camino Real de Carretas 7", "deleg": "Villa Cayetano Rubio", "gps": "20.599166,-100.362786"},
+        {"inv": "216", "name": "Camino Real de Carretas 8", "deleg": "Villa Cayetano Rubio", "gps": "20.599558,-100.366539"},
+        {"inv": "217", "name": "Pan de Dulce", "deleg": "Villa Cayetano Rubio", "gps": "20.603341,-100.345336"},
+        {"inv": "218", "name": "Pino Suárez y carretera 200", "deleg": "Villa Cayetano Rubio", "gps": "20.597764,-100.356825"},
+        {"inv": "219", "name": "Parque Hércules casa de día Emeterio González", "deleg": "Villa Cayetano Rubio", "gps": "20.600774,-100.355792"},
+        {"inv": "220", "name": "Jardinera Avenida Hércules", "deleg": "Villa Cayetano Rubio", "gps": "20.600259,-100.369568"},
+        {"inv": "221", "name": "El Cortijo ", "deleg": "Villa Cayetano Rubio", "gps": "20.599732,-100.371632"},
+        {"inv": "222", "name": "Parque Calesa", "deleg": "Villa Cayetano Rubio", "gps": "20.601280,-100.372198"},
+        {"inv": "223", "name": "Alamos 1ra Sección", "deleg": "Villa Cayetano Rubio", "gps": "20.602771,-100.376432"},
+        {"inv": "224", "name": "Colinas del Parque", "deleg": "Villa Cayetano Rubio", "gps": "20.608017,-100.377574"},
+        {"inv": "225", "name": "Lomas del Marqués", "deleg": "Villa Cayetano Rubio", "gps": "20.609989,-100.364857"},
+        {"inv": "226", "name": "Parque Columbia", "deleg": "Villa Cayetano Rubio", "gps": "20.613698,-100.373622"},
+        {"inv": "227", "name": "Parque Bolaños ", "deleg": "Villa Cayetano Rubio", "gps": "20.614837,-100.373255"},
+        {"inv": "228", "name": "El Parque", "deleg": "Epigmenio González", "gps": "20.626132,-100.397470"},
+        {"inv": "229", "name": "Parque de Ficus", "deleg": "Epigmenio González", "gps": "20.617511,-100.389089"},
+        {"inv": "230", "name": "Canchas Morera Arboledas", "deleg": "Epigmenio González", "gps": "20.617112,-100.387946"},
+        {"inv": "231", "name": "Parque Mango", "deleg": "Epigmenio González", "gps": "20.615832,-100.385521"},
+        {"inv": "232", "name": "Área Verde Mezquite", "deleg": "Epigmenio González", "gps": "20.615060,-100.384543"},
+        {"inv": "233", "name": "Área Verde Huejote", "deleg": "Epigmenio González", "gps": "20.613520,-100.382610"},
+        {"inv": "234", "name": "Parque Catalpa", "deleg": "Epigmenio González", "gps": "20.613031,-100.381977"},
+        {"inv": "235", "name": "Área Verde Morera", "deleg": "Epigmenio González", "gps": "20.612325,-100.381067"},
+        {"inv": "236", "name": "Área Verde Paseo de la Colina 1", "deleg": "Epigmenio González", "gps": "20.611582,-100.380133"},
+        {"inv": "237", "name": "Área Verde Paseo de la Colina 2", "deleg": "Epigmenio González", "gps": "20.614077,-100.381120"},
+        {"inv": "238", "name": "Parque  Arboledas", "deleg": "Epigmenio González", "gps": "20.612816,-100.379893"},
+        {"inv": "239", "name": "Área Verde Celtis", "deleg": "Epigmenio González", "gps": "20.615071,-100.381813"},
+        {"inv": "240", "name": "Área Verde Granada", "deleg": "Epigmenio González", "gps": "20.616062,-100.382633"},
+        {"inv": "241", "name": "Área Verde Hule", "deleg": "Epigmenio González", "gps": "20.617171,-100.384267"},
+        {"inv": "242", "name": "Área Verde Tamarindo", "deleg": "Epigmenio González", "gps": "20.618608,-100.388319"},
+        {"inv": "243", "name": "Villas del Parque", "deleg": "Epigmenio González", "gps": "20.618483,-100.390962"},
+        {"inv": "244", "name": "Sierra Vista", "deleg": "Epigmenio González", "gps": "20.622801,-100.399097"},
+        {"inv": "245", "name": "Buena Vista", "deleg": "Epigmenio González", "gps": "20.623456,-100.398897"},
+        {"inv": "246", "name": "Parque San Pablo II", "deleg": "Epigmenio González", "gps": "20.625675,-100.403694"},
+        {"inv": "247", "name": "Parque Toyota", "deleg": "Epigmenio González", "gps": "20.620541,-100.408187"},
+        {"inv": "248", "name": "Parque Playa Roqueta", "deleg": "Epigmenio González", "gps": "20.622300,-100.408300"},
+        {"inv": "249", "name": "Cerro del Tigre", "deleg": "Epigmenio González", "gps": "20.623273,-100.416401"},
+        {"inv": "250", "name": "Parque Playa Mocambo", "deleg": "Epigmenio González", "gps": "20.623797,-100.409776"},
+        {"inv": "251", "name": "Pathé", "deleg": "Epigmenio González", "gps": "20.624739,-100.414449"},
+        {"inv": "252", "name": "Villas Tláloc", "deleg": "Epigmenio González", "gps": "20.625165,-100.415860"},
+        {"inv": "253", "name": "Parque Tonatiuh", "deleg": "Epigmenio González", "gps": "20.626326,-100.418673"},
+        {"inv": "254", "name": "Parque Sombrerete", "deleg": "Epigmenio González", "gps": "20.6296, -100.4138"},
+        {"inv": "255", "name": "Parque Constituyentes", "deleg": "Epigmenio González", "gps": "20.623804,-100.393561 20.623101,-100.390782"},
+        {"inv": "256", "name": "Parque Generosidad", "deleg": "Epigmenio González", "gps": "20.626119,-100.395590"},
+        {"inv": "257", "name": "Parque Amalia Solórzano ", "deleg": "Epigmenio González", "gps": "20.630273,-100.40432"},
+        {"inv": "258", "name": "Parque Técnicos", "deleg": "Epigmenio González", "gps": "20.634751,-100.402930"},
+        {"inv": "259", "name": "Parque Unidad Cívica Mecánicos", "deleg": "Epigmenio González", "gps": "20.636914,-100.403722"},
+        {"inv": "260", "name": "Parque Nuevo Horizonte", "deleg": "Epigmenio González", "gps": "20.635865,-100.406434"},
+        {"inv": "261", "name": "Parque Misión Bucareli Sur", "deleg": "Epigmenio González", "gps": "20.639427,-100.412655"},
+        {"inv": "262", "name": "Parque Eurípides", "deleg": "Epigmenio González", "gps": "20.640057,-100.404378"},
+        {"inv": "263", "name": "Misión de Bucareli Norte 1", "deleg": "Epigmenio González", "gps": "20.642281,-100.411688"},
+        {"inv": "264", "name": "Misión de Bucareli Norte 2", "deleg": "Epigmenio González", "gps": "20.642391,-100.411496"},
+        {"inv": "265", "name": "Misión de Bucareli Norte 3", "deleg": "Epigmenio González", "gps": "20.642432,-100.411850"},
+        {"inv": "266", "name": "Misión de Bucareli Norte 4", "deleg": "Epigmenio González", "gps": "20.643824,-100.413211"},
+        {"inv": "267", "name": "Misión Riviera", "deleg": "Epigmenio González", "gps": "20.643103,-100.413109 20.642509,-100.412751"},
+        {"inv": "268", "name": "Puerta de Belén Etapa 3", "deleg": "Epigmenio González", "gps": "20.643274,-100.414736"},
+        {"inv": "269", "name": "Puerta de Belén Etapa 4", "deleg": "Epigmenio González", "gps": "20.645034,-100.413858"},
+        {"inv": "270", "name": "Puerta de Belén Etapa 1", "deleg": "Epigmenio González", "gps": "20.647336,-100.414268"},
+        {"inv": "271", "name": "Parque San Pedrito Los Arcos (Parque de Arte Urbano)", "deleg": "Epigmenio González", "gps": "20.647088,-100.410795"},
+        {"inv": "272", "name": "El Vergel II", "deleg": "Epigmenio González", "gps": "20.649863,-100.414623"},
+        {"inv": "273", "name": "El Vergel", "deleg": "Epigmenio González", "gps": "20.651873,-100.411109"},
+        {"inv": "274", "name": "Parque Portal del Bueno", "deleg": "Epigmenio González", "gps": "20.648200,-100.396000"},
+        {"inv": "275", "name": "Parque Turmalina", "deleg": "Epigmenio González", "gps": "20.647700,-100.396500"},
+        {"inv": "276", "name": "Parque Portal del Topo", "deleg": "Epigmenio González", "gps": "20.648821,-100.397214"},
+        {"inv": "277", "name": "Portal de la Alegría", "deleg": "Epigmenio González", "gps": "20.649400,-100.396900"},
+        {"inv": "278", "name": "Parque Tlatelolco", "deleg": "Epigmenio González", "gps": "20.652083,-100.399135"},
+        {"inv": "279", "name": "Villas de Santiago", "deleg": "Epigmenio González", "gps": "20.653579,-100.397860"},
+        {"inv": "280", "name": "Parque Unidad Nacional", "deleg": "Epigmenio González", "gps": "20.655074,-100.402038"},
+        {"inv": "281", "name": "Jardines de Santiago Secc. Portal de Santiago", "deleg": "Epigmenio González", "gps": "20.655371,-100.392923"},
+        {"inv": "282", "name": "Jardines de Santiago Sección Vistana", "deleg": "Epigmenio González", "gps": "20.655073,-100.391260"},
+        {"inv": "283", "name": "Parque La Tortuga ", "deleg": "Epigmenio González", "gps": "20.664416,-100.394557"},
+        {"inv": "284", "name": "Área verde Río Mayo", "deleg": "Epigmenio González", "gps": "20.636857,-100.390541"},
+        {"inv": "285", "name": "Generación 2000", "deleg": "Epigmenio González", "gps": "20.641667,-100.380056"},
+        {"inv": "286", "name": "Fraccionamiento del Bosque", "deleg": "Epigmenio González", "gps": "20.642748,-100.385294"},
+        {"inv": "287", "name": "Parque Mujeres Independientes", "deleg": "Epigmenio González", "gps": "20.643835,-100.383753"},
+        {"inv": "288", "name": "Parque Ignacio Pérez", "deleg": "Epigmenio González", "gps": "20.645508,-100.383878"},
+        {"inv": "289", "name": "10 de Diciembre", "deleg": "Epigmenio González", "gps": "20.648779,-100.388006"},
+        {"inv": "290", "name": "Juegos Infantiles Miguel Hidalgo", "deleg": "Epigmenio González", "gps": "20.650334,-100.383154"},
+        {"inv": "291", "name": "San José el Alto", "deleg": "Epigmenio González", "gps": "20.655189,-100.381522"},
+        {"inv": "292", "name": "Parque Guanajuato", "deleg": "Epigmenio González", "gps": "20.655809,-100.380141"},
+        {"inv": "293", "name": "Calle Fray Pedro de Font", "deleg": "Epigmenio González", "gps": "20.658788,-100.367320"},
+        {"inv": "294", "name": "Alameda Norte", "deleg": "Epigmenio González", "gps": "20.639509,-100.397591"},
+        {"inv": "295", "name": "Paseo Constitución", "deleg": "Epigmenio González", "gps": "20.621473,-100.391416"},
+        {"inv": "298", "name": "Parque Holland", "deleg": "Epigmenio González", "gps": "20.627185,-100.407798"}
+    ];
+
+    // Carga automática de los parques en el selector         
+    const selectElement = document.getElementById('parque_select');
+    baseParques.forEach(parque => {
+        const option = document.createElement('option');
+        option.value = parque.name;
+        option.textContent = `${parque.name} (${parque.deleg})`;
+        option.setAttribute('data-inv', parque.inv);
+        option.setAttribute('data-deleg', parque.deleg);
+        option.setAttribute('data-gps', parque.gps);
+        selectElement.appendChild(option);
+    });
+
+    function actualizarDatosParque() {
+        var select = document.getElementById("parque_select");
+        var selectedOption = select.options[select.selectedIndex];
+        
+        if(selectedOption.value !== "") {
+            document.getElementById("no_inventario").value = selectedOption.getAttribute("data-inv");
+            document.getElementById("delegacion").value = selectedOption.getAttribute("data-deleg");
+            document.getElementById("gps_coordenadas").value = selectedOption.getAttribute("data-gps");
+        }
+    }
+
+  
+
+    // === CÓDIGO MAESTRO PARA ENVIAR DATOS Y FOTOS GRATIS ===
+    const blobsBase64 = { fotoAntes: "", fotoDurante: "", fotoDespues: "" };
+
+    // Capturar y procesar las imágenes de tus campos reales
+    document.getElementById('fotoAntes').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(evt) { blobsBase64.fotoAntes = evt.target.result.split(',')[1]; };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('fotoDurante').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(evt) { blobsBase64.fotoDurante = evt.target.result.split(',')[1]; };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('fotoDespues').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(evt) { blobsBase64.fotoDespues = evt.target.result.split(',')[1]; };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Envío silencioso por AJAX
+    document.getElementById('reportForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        alert("🚀 Subiendo reporte oficial... Procesando fotos en alta velocidad de forma gratuita. No cierres la página.");
+
+        const payload = {
+            fecha: document.getElementById('fecha_automatica').value,
+            inventario: document.getElementById('no_inventario').value,
+            parque: document.getElementById('parque_select').value,
+            delegacion: document.getElementById('delegacion').value,
+            gps: document.getElementById('gps_coordenadas').value,
+            supervisor: document.getElementById('supervisor_input').value,
+            fotoAntes: blobsBase64.fotoAntes,
+            fotoDurante: blobsBase64.fotoDurante,
+            fotoDespues: blobsBase64.fotoDespues
+        };
+
+        try {
+            await fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            alert("✅ ¡Reporte enviado con éxito! Los datos y las fotos ya quedaron registrados en tu Google Sheets.");
+            document.getElementById('reportForm').reset();
+        } catch (error) {
+            alert("❌ Falló el envío: " + error.message);
+        }
+    });
+</script>
+</body>
+</html>
