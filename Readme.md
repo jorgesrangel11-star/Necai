@@ -7,7 +7,7 @@ Sistema de gestión y optimización de procesos administrativos desarrollado par
 * **Digitalización de Reportes:** Captura y registro de datos en campo por parte de supervisores desde dispositivos móviles.
 * **Gestión de Evidencias Fotográficas:** Organización y almacenamiento automático de imágenes en Google Drive con compresión optimizada.
 * **Control de Inventario en Tiempo Real:** Tablero de control dinámico con inventario activo e historial cronológico de mantenimiento.
-* **Centralización de Datos:** Integración eficiente para el procesamiento y consulta centralizada de reportes[cite: 1].
+* **Centralización de Datos:** Integración eficiente para el procesamiento y consulta centralizada de reportes.
 
 ##  Estructura y Automatización en Google Drive
 
