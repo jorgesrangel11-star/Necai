@@ -62,15 +62,15 @@
 
         <input type="hidden" id="gps_coordenadas">
 
-        <!-- ================= SECCIÓN ANTES ================= -->
+
         <label>Fotos ANTES del Mantenimiento:</label>
         <div class="btn-doble-container">
-            <!-- Botón Cámara (SIN multiple) -->
+           
             <div class="foto-section">
                 <input type="file" accept="image/*" capture="environment" onchange="procesarFotosMultiples(this, 'fotoAntes', 'status_antes', 'btnLimpiarAntes')">
                 <div class="foto-label">📸 Tomar Foto</div>
             </div>
-            <!-- Botón Galería (CON multiple) -->
+          
             <div class="foto-section">
                 <input type="file" accept="image/*" multiple onchange="procesarFotosMultiples(this, 'fotoAntes', 'status_antes', 'btnLimpiarAntes')">
                 <div class="foto-label">🖼️ Galería</div>
@@ -79,15 +79,15 @@
         <div id="status_antes" class="status-fotos">0/10 Fotos agregadas</div>
         <div style="text-align:center;"><span class="btn-limpiar" id="btnLimpiarAntes" onclick="limpiarFotos('fotoAntes', 'status_antes', 'btnLimpiarAntes')">Borrar fotos de esta sección</span></div>
 
-        <!-- ================= SECCIÓN DURANTE ================= -->
+      
         <label>Fotos DURANTE el Proceso:</label>
         <div class="btn-doble-container">
-            <!-- Botón Cámara (SIN multiple) -->
+          
             <div class="foto-section">
                 <input type="file" accept="image/*" capture="environment" onchange="procesarFotosMultiples(this, 'fotoDurante', 'status_durante', 'btnLimpiarDurante')">
                 <div class="foto-label">📸 Tomar Foto</div>
             </div>
-            <!-- Botón Galería (CON multiple) -->
+    
             <div class="foto-section">
                 <input type="file" accept="image/*" multiple onchange="procesarFotosMultiples(this, 'fotoDurante', 'status_durante', 'btnLimpiarDurante')">
                 <div class="foto-label">🖼️ Galería</div>
@@ -96,15 +96,15 @@
         <div id="status_durante" class="status-fotos">0/10 Fotos agregadas</div>
         <div style="text-align:center;"><span class="btn-limpiar" id="btnLimpiarDurante" onclick="limpiarFotos('fotoDurante', 'status_durante', 'btnLimpiarDurante')">Borrar fotos de esta sección</span></div>
 
-        <!-- ================= SECCIÓN DESPUÉS ================= -->
+      
         <label>Fotos DESPUÉS del Mantenimiento:</label>
         <div class="btn-doble-container">
-            <!-- Botón Cámara (SIN multiple) -->
+          
             <div class="foto-section">
                 <input type="file" accept="image/*" capture="environment" onchange="procesarFotosMultiples(this, 'fotoDespues', 'status_despues', 'btnLimpiarDespues')">
                 <div class="foto-label">📸 Tomar Foto</div>
             </div>
-            <!-- Botón Galería (CON multiple) -->
+           
             <div class="foto-section">
                 <input type="file" accept="image/*" multiple onchange="procesarFotosMultiples(this, 'fotoDespues', 'status_despues', 'btnLimpiarDespues')">
                 <div class="foto-label">🖼️ Galería</div>
@@ -308,10 +308,10 @@
     
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyDBjQxntm_pUu_3hCEcPyA3ZmnPFIlHw81DH3bUmiIUNr4E4J4klvD0pX86z7nlsD7Ug/exec";
 
-    // fecha automática en el sistema
+
     document.getElementById('fecha_automatica').value = new Date().toLocaleString('es-MX');
 
-    // Lista Completa Extraída Directamente de la pestaña DESGLOCE (298 Parques)
+   
     const baseParques = [
         {"inv": "1", "name": "Canchas Cristal", "deleg": "Santa Rosa Jáuregui", "gps": "20.746333,-100.445757"},
         {"inv": "2", "name": "Jardineras frente al mercado SRJ", "deleg": "Santa Rosa Jáuregui", "gps": "20.744210,-100.449389"},
@@ -614,7 +614,7 @@
         {"inv": "298", "name": "Parque Holland", "deleg": "Epigmenio González", "gps": "20.627185,-100.407798"}
     ];
 
-    // Carga automática de los parques en el selector         
+          
     const selectElement = document.getElementById('parque_select');
     baseParques.forEach(parque => {
         const option = document.createElement('option');
@@ -639,10 +639,10 @@
 
   
 
-    // === CÓDIGO MAESTRO PARA ENVIAR DATOS Y FOTOS GRATIS ===
+
     const blobsBase64 = { fotoAntes: "", fotoDurante: "", fotoDespues: "" };
 
-    // Capturar y procesar las imágenes de tus campos reales
+    
     document.getElementById('fotoAntes').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
@@ -670,7 +670,7 @@
         }
     });
 
-    // Envío silencioso por AJAX
+ 
     document.getElementById('reportForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
