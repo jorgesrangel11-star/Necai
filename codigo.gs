@@ -86,7 +86,7 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify({"result": "error", "error": "Inventario no encontrado en el Excel"})).setMimeType(ContentService.MimeType.JSON);
     }
     
-    // CORRECCIÓN: En lugar de acumular texto y hacer la celda gigante, SOBREESCRIBE con el mantenimiento más reciente
+    
     hoja.getRange(filaParque, 1).setValue(datos.fecha);
     hoja.getRange(filaParque, 7).setValue(datos.gps_coordenadas || "Sin GPS");
     hoja.getRange(filaParque, 8).setValue(datos.supervisor);
@@ -109,7 +109,7 @@ function doPost(e) {
     var linksDurante = [];
     var linksDespues = [];
 
-    // PROCESAMIENTO DE FOTOS EN LA CARPETA DE DRIVE CORRESPONDIENTE
+    
     function procesarFotos(arrayFotos, prefijo, columna, arregloLinks) {
       if (arrayFotos && arrayFotos.length > 0) {
         for (var f = 0; f < arrayFotos.length; f++) {
@@ -120,7 +120,7 @@ function doPost(e) {
           arregloLinks.push(archivo.getUrl());
         }
         
-        // En la pestaña principal actualiza con los links de la última visita solamente
+        
         var celda = hoja.getRange(filaParque, columna);
         var encabezado = "-- Visita del " + datos.fecha + " --\n";
         var urlsTexto = arregloLinks.join("\n");
@@ -140,9 +140,7 @@ function doPost(e) {
     procesarFotos(datos.fotoDurante, "Durante", 12, linksDurante); 
     procesarFotos(datos.fotoDespues, "Despues", 13, linksDespues); 
     
-    // ==========================================
-    // SECCIÓN DE HISTORIAL EN BITÁCORA (Fila nueva automática siempre)
-    // ==========================================
+   
     var hojaBitacora = libro.getSheetByName("Historial_Bitácora");
     if (!hojaBitacora) {
       hojaBitacora = libro.insertSheet("Historial_Bitácora");
@@ -168,7 +166,7 @@ function doPost(e) {
       urlCarpeta
     ];
     
-    // INSERTAR FILA NUEVA Y AUTOMÁTICA EN LA PESTAÑA HISTORIAL_BITÁCORA
+
     hojaBitacora.appendRow(nuevaFilaBitacora);
     var filaInsertada = hojaBitacora.getLastRow();
     hojaBitacora.getRange(filaInsertada, 1, 1, 11).setWrap(true).setVerticalAlignment("top");
